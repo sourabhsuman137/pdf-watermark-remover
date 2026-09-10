@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Logo / Watermark Remover</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Arial, sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.14), transparent 32%),
+      radial-gradient(circle at 85% 90%, rgba(124, 58, 237, 0.12), transparent 32%),
+      #f6f8fc;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    color: #172033;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 560px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 24px;
+    padding: 34px;
+    box-shadow: 0 20px 60px rgba(31, 41, 55, 0.12);
+    text-align: center;
+    backdrop-filter: blur(12px);
+  }
+
+  .brand-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 16px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+  }
+
+  h1 {
+    font-size: 26px;
+    line-height: 1.2;
+    margin: 0 0 8px;
+    letter-spacing: -0.6px;
+  }
+
+  .subtitle {
+    color: #697386;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 auto 24px;
+    max-width: 420px;
+  }
+
+  .upload-box {
+    border: 1.5px dashed #b8c3d6;
+    background: #f8faff;
+    border-radius: 18px;
+    padding: 24px 18px;
+    transition: 0.2s ease;
+  }
+
+  .upload-box:hover {
+    border-color: #2563eb;
+    background: #f5f8ff;
+  }
+
+  .upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 11px 16px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #dbe2ee;
+    color: #26344d;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.06);
+  }
+
+  #pdfInput {
+    display: none;
+  }
+
+  #fileName {
+    display: block;
+    margin-top: 12px;
+    color: #7a8496;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .options {
+    text-align: left;
+    margin: 16px 0;
+    padding: 13px 15px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e8edf5;
+    font-size: 13px;
+  }
+
+  .options label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+  }
+
+  .options input {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+  }
+
+  #processBtn,
+  .download-btn {
+    width: 100%;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+
+  #processBtn:hover,
+  .download-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 25px rgba(37, 99, 235, 0.28);
+  }
+
+  #processBtn:disabled {
+    background: #a8b0bd;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #status {
+    margin: 17px 0 0;
+    font-size: 13px;
+    color: #596579;
+    min-height: 20px;
+  }
+
+  #downloadLink {
+    display: block;
+    margin-top: 12px;
+    text-decoration: none;
+  }
+
+  .footer {
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid #edf0f5;
+    color: #8a94a6;
+    font-size: 12px;
+  }
+
+  .footer strong {
+    color: #4b5568;
+    font-weight: 600;
+  }
+
+  .progress-panel {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid #e7ebf3;
+    border-radius: 16px;
+    background: #fbfcff;
+    text-align: left;
+  }
+
+  .progress-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #596579;
+  }
+
+  .progress-top strong {
+    color: #2563eb;
+    font-size: 15px;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 9px;
+    background: #e8edf5;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    transition: width 0.25s ease;
+  }
+
+  .progress-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 13px;
+  }
+
+  .stat {
+    padding: 9px 6px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #edf0f5;
+    text-align: center;
+  }
+
+  .stat span {
+    display: block;
+    color: #8a94a6;
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .stat strong {
+    display: block;
+    color: #26344d;
+    font-size: 13px;
+  }
+
+  #status {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: #697386;
+    min-height: 18px;
+    text-align: center;
+  }
+
+  canvas {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      padding: 14px;
+    }
+
+    .container {
+      padding: 25px 18px;
+      border-radius: 20px;
+    }
+
+    h1 {
+      font-size: 23px;
+    }
+
+    .progress-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>PDF Logo / Watermark Remover</h1>
+
+    <div class="brand-icon">PDF</div>
+
+    <h1>PDF Watermark Remover</h1>
+    <p class="subtitle">
+      Remove light logos and watermarks while keeping your PDF page orientation intact.
+    </p>
+
+    <div class="upload-box">
+      <label class="upload-label" for="pdfInput">
+        📄 Choose PDF File
+      </label>
+      <input type="file" id="pdfInput" accept="application/pdf" />
+      <span id="fileName">No PDF selected</span>
+    </div>
+
+    <div class="options">
+      <label>
+        <input type="checkbox" id="preserveQuality" checked />
+        Better quality
+      </label>
+    </div>
+
+    <button id="processBtn">Remove Watermark</button>
+
+    <div class="progress-panel" id="progressPanel" style="display:none;">
+      <div class="progress-top">
+        <span id="progressTitle">Preparing...</span>
+        <strong id="progressPercent">0%</strong>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="progress-stats">
+        <div class="stat">
+          <span>Pages Done</span>
+          <strong id="pagesDone">0</strong>
+        </div>
+        <div class="stat">
+          <span>Pages Left</span>
+          <strong id="pagesLeft">0</strong>
+        </div>
+        <div class="stat">
+          <span>Elapsed</span>
+          <strong id="elapsedTime">00:00</strong>
+        </div>
+        <div class="stat">
+          <span>Remaining</span>
+          <strong id="remainingTime">--:--</strong>
+        </div>
+      </div>
+
+      <p id="status">Preparing...</p>
+    </div>
+
+    <a id="downloadLink" style="display:none" download="cleaned.pdf">
+      <button type="button">Download Cleaned PDF</button>
+    </a>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="footer">
+      This tool is designed by <strong>Sourabh Suman</strong>
+    </div>
+  </div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  const input = document.getElementById("pdfInput");
+  const btn = document.getElementById("processBtn");
+  const status = document.getElementById("status");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const downloadLink = document.getElementById("downloadLink");
+  const preserveQuality = document.getElementById("preserveQuality");
+  const fileName = document.getElementById("fileName");
+
+  const progressPanel = document.getElementById("progressPanel");
+  const progressBar = document.getElementById("progressBar");
+  const progressPercent = document.getElementById("progressPercent");
+  const progressTitle = document.getElementById("progressTitle");
+  const pagesDoneEl = document.getElementById("pagesDone");
+  const pagesLeftEl = document.getElementById("pagesLeft");
+  const elapsedTimeEl = document.getElementById("elapsedTime");
+  const remainingTimeEl = document.getElementById("remainingTime");
+
+  let processingStartTime = 0;
+  let elapsedTimer = null;
+
+  input.addEventListener("change", () => {
+    fileName.textContent = input.files[0]
+      ? input.files[0].name
+      : "No PDF selected";
+  });
+
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
+
+    seconds = Math.ceil(seconds);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
+  function updateProgress(done, total, phase = "Processing") {
+    const percent = total > 0
+      ? Math.min(100, Math.round((done / total) * 100))
+      : 0;
+
+    const elapsed = (performance.now() - processingStartTime) / 1000;
+
+    let remaining = NaN;
+    if (done > 0 && percent < 100) {
+      const averagePerPage = elapsed / done;
+      remaining = averagePerPage * (total - done);
+    }
+
+    progressBar.style.width = `${percent}%`;
+    progressPercent.textContent = `${percent}%`;
+    progressTitle.textContent = phase;
+    pagesDoneEl.textContent = done;
+    pagesLeftEl.textContent = Math.max(0, total - done);
+    elapsedTimeEl.textContent = formatTime(elapsed);
+    remainingTimeEl.textContent =
+      percent >= 100 ? "00:00" : formatTime(remaining);
+
+    status.innerText =
+      `${phase} • ${done} of ${total} pages`;
+  }
+
+  function startElapsedClock(total) {
+    clearInterval(elapsedTimer);
+
+    elapsedTimer = setInterval(() => {
+      const elapsed = (performance.now() - processingStartTime) / 1000;
+      elapsedTimeEl.textContent = formatTime(elapsed);
+    }, 250);
+
+    updateProgress(0, total, "Starting...");
+  }
+
+  function stopElapsedClock() {
+    clearInterval(elapsedTimer);
+    elapsedTimer = null;
+  }
+
+  btn.onclick = async () => {
+    if (!input.files[0]) {
+      alert("Please upload a PDF first.");
+      return;
+    }
+
+    btn.disabled = true;
+    downloadLink.style.display = "none";
+
+    try {
+      status.innerText = "Loading PDF...";
+
+      const file = input.files[0];
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+      progressPanel.style.display = "block";
+      processingStartTime = performance.now();
+      startElapsedClock(pdf.numPages);
+
+      const cleanedPages = [];
+
+      // 1.5 gives a good balance between quality and output size.
+      // If "Better quality" is enabled, use 1.75.
+      const scale = preserveQuality.checked ? 1.75 : 1.5;
+      const jpegQuality = preserveQuality.checked ? 0.78 : 0.68;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        updateProgress(
+          pageNum - 1,
+          pdf.numPages,
+          `Processing page ${pageNum} of ${pdf.numPages}`
+        );
+
+        const page = await pdf.getPage(pageNum);
+
+        // Use the page's actual dimensions.
+        const viewport = page.getViewport({ scale });
+
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+
+        // White background prevents transparent/odd backgrounds.
+        ctx.save();
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        await page.render({
+          canvasContext: ctx,
+          viewport: viewport
+        }).promise;
+
+        // WATERMARK REMOVAL LOGIC
+        // Keeps the original strategy: very light/faint pixels are whitened.
+        const imageData = ctx.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          const brightness = (r + g + b) / 3;
+
+          if (brightness > 200) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        const image = canvas.toDataURL(
+          "image/jpeg",
+          jpegQuality
+        );
+
+        // Store each page's own dimensions.
+        // This is the important fix for landscape pages.
+        cleanedPages.push({
+          image: image,
+          widthPx: canvas.width,
+          heightPx: canvas.height
+        });
+
+        updateProgress(
+          pageNum,
+          pdf.numPages,
+          `Completed page ${pageNum} of ${pdf.numPages}`
+        );
+
+        // Give the browser a chance to update the UI.
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      updateProgress(
+        pdf.numPages,
+        pdf.numPages,
+        "All pages processed • Building PDF..."
+      );
+
+      if (!window.jspdf) {
+        await loadJsPDF();
+      }
+
+      buildPDF(cleanedPages);
+
+    } catch (error) {
+      console.error(error);
+      stopElapsedClock();
+      status.innerText =
+        "Error: Could not process this PDF.";
+      alert(
+        "Could not process the PDF. Please try another PDF."
+      );
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  function loadJsPDF() {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(
+        'script[data-jspdf="true"]'
+      );
+
+      if (existing) {
+        existing.addEventListener("load", resolve);
+        existing.addEventListener("error", reject);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      script.dataset.jspdf = "true";
+
+      script.onload = resolve;
+      script.onerror = reject;
+
+      document.body.appendChild(script);
+    });
+  }
+
+  function buildPDF(pages) {
+    const { jsPDF } = window.jspdf;
+
+    if (!pages.length) {
+      throw new Error("No pages to build.");
+    }
+
+    // Use a fixed DPI conversion for predictable physical dimensions.
+    const DPI = 96;
+    const pxToMm = 25.4 / DPI;
+
+    let pdf = null;
+
+    pages.forEach((page, index) => {
+      const widthMm = page.widthPx * pxToMm;
+      const heightMm = page.heightPx * pxToMm;
+
+      const orientation =
+        widthMm >= heightMm ? "landscape" : "portrait";
+
+      if (index === 0) {
+        pdf = new jsPDF({
+          orientation: orientation,
+          unit: "mm",
+          format: [widthMm, heightMm],
+          compress: true
+        });
+      } else {
+        pdf.addPage(
+          [widthMm, heightMm],
+          orientation
+        );
+      }
+
+      // "FAST" avoids unnecessary image processing by jsPDF.
+      pdf.addImage(
+        page.image,
+        "JPEG",
+        0,
+        0,
+        widthMm,
+        heightMm,
+        undefined,
+        "FAST"
+      );
+    });
+
+    const blob = pdf.output("blob");
+    const url = URL.createObjectURL(blob);
+
+    // Release previous object URL if one exists.
+    if (downloadLink.dataset.objectUrl) {
+      URL.revokeObjectURL(downloadLink.dataset.objectUrl);
+    }
+
+    downloadLink.dataset.objectUrl = url;
+    downloadLink.href = url;
+
+    // Keep the original PDF filename and append the requested suffix.
+    // Example: document.pdf -> document ~watermark remove by artist.pdf
+    const originalName = input.files[0].name;
+    const dotIndex = originalName.toLowerCase().lastIndexOf(".pdf");
+    const baseName = dotIndex > 0
+      ? originalName.substring(0, dotIndex)
+      : originalName;
+
+    downloadLink.download =
+      `${baseName} ~watermark remove by artist.pdf`;
+
+    downloadLink.style.display = "inline-block";
+
+    const sizeMB = blob.size / (1024 * 1024);
+
+    stopElapsedClock();
+
+    progressBar.style.width = "100%";
+    progressPercent.textContent = "100%";
+    progressTitle.textContent = "Completed";
+    pagesDoneEl.textContent = pages.length;
+    pagesLeftEl.textContent = "0";
+    remainingTimeEl.textContent = "00:00";
+
+    const totalElapsed =
+      (performance.now() - processingStartTime) / 1000;
+
+    elapsedTimeEl.textContent = formatTime(totalElapsed);
+
+    status.innerText =
+      `Completed ${pages.length}/${pages.length} pages • ${sizeMB.toFixed(2)} MB`;
+  }
+</script>
+</body>
+</html>
