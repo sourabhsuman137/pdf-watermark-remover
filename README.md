@@ -2,7 +2,7 @@
 
 A simple, privacy-friendly browser tool that removes light logos and watermarks from PDF files — **100% client-side**, no server, no upload, no data ever leaves your device.
 
-🔗 **Live Demo:** [https://YOUR-USERNAME.github.io/pdf-watermark-remover/](https://YOUR-USERNAME.github.io/pdf-watermark-remover/)
+🔗 **Live Demo:** [https://YOUR-USERNAME.github.io/pdf-watermark-remover/](https://sourabhsuman137.github.io/pdf-watermark-remover/)
 
 ---
 
@@ -32,7 +32,7 @@ A simple, privacy-friendly browser tool that removes light logos and watermarks 
 ## 📦 Usage
 
 ### Option 1: Use it online
-Just open the [live demo](https://YOUR-USERNAME.github.io/pdf-watermark-remover/) link — no install needed.
+Just open the [live demo](https://sourabhsuman137.github.io/pdf-watermark-remover/) link — no install needed.
 
 ### Option 2: Run locally
 ```bash
